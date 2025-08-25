@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Iterable, Mapping
+from typing import Callable, Iterable, Mapping
 
 from google.protobuf.message import Message
 
@@ -44,6 +44,7 @@ def protodocs_app(
     services: Iterable[str] | str,
     serialized_descriptors: bytes | None = None,
     example_requests: Mapping[str, Iterable[Message]] | None = None,
+    injected_script_suppliers: Iterable[Callable[[], str]] = (),
 ):
     # Allow passing in path for convenience
     if isinstance(services, str):
@@ -76,11 +77,19 @@ def protodocs_app(
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
 
+    def serve_injected(request: Request):
+        content = "\n".join(supplier() for supplier in injected_script_suppliers)
+        return Response(
+            content=content,
+            headers={"Content-Type": "application/javascript; charset=utf-8"},
+        )
+
     return Starlette(
         routes=[
             Route("/specification.json", serve_spec),
             Route("/schemas.json", serve_schemas),
             Route("/versions.json", serve_versions),
+            Route("/injected.js", serve_injected),
             Mount(
                 "/",
                 StaticFiles(directory=Path(__file__).parent / "docsclient"),
