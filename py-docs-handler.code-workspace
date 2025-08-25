@@ -1,0 +1,47 @@
+{
+  "folders": [
+    {
+      "name": "/",
+      "path": "."
+    }
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "example",
+        "type": "debugpy",
+        "console": "internalConsole",
+        "request": "launch",
+        "program": "${workspaceFolder:/}/.venv/bin/uvicorn",
+        "args": ["example.example:app"],
+        "justMyCode": false
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "charliermarsh.ruff",
+      "esbenp.prettier-vscode",
+      "ms-python.python",
+      "ms-python.vscode-pylance"
+    ]
+  },
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": ["test"],
+    "python.testing.unittestEnabled": false,
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+  }
+}

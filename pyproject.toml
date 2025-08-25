@@ -1,0 +1,20 @@
+[project]
+name = "protodocs"
+version = "0.1.0"
+description = "ASGI application for serving protobuf API docs"
+authors = [{ name = "CurioSwitch" }]
+requires-python = ">= 3.10"
+readme = "README.md"
+license-files = ["LICENSE"]
+
+dependencies = ["protobuf", "starlette"]
+
+[tool.uv]
+dev-dependencies = ["connecpy", "pyright[nodejs]", "pytest", "ruff", "uvicorn"]
+
+[build-system]
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
