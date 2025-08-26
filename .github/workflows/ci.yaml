@@ -75,7 +75,7 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     needs: build
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     steps:
       - uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
         with:
