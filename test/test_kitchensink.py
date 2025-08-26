@@ -1,18 +1,17 @@
 import json
 from pathlib import Path
 
+import test.testpb_pb2  # noqa: F401
 from protodocs._proto_specification import generate_proto_specification
 
-import testpb_pb2  # noqa: F401
 
-
-def test_all_parameter_types_match_armeria():
+def test_all_parameter_types_match_armeria() -> None:
     serialized_descriptors = (Path(__file__).parent / "descriptorset.pb").read_bytes()
     spec = generate_proto_specification(
         ["armeria.grpc.testing.TestService"], serialized_descriptors
     )
 
-    with open(Path(__file__).parent / "armeria-spec.json", "r") as f:
+    with (Path(__file__).parent / "armeria-spec.json").open() as f:
         armeria_spec = json.load(f)
 
     assert spec.to_json() == armeria_spec

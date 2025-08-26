@@ -1,5 +1,4 @@
-from typing import Sequence
-
+from collections.abc import Sequence
 
 from google.protobuf.descriptor_pb2 import (
     DescriptorProto,
@@ -11,7 +10,7 @@ from google.protobuf.descriptor_pb2 import (
 
 def extract_docstrings(
     file_descriptor: FileDescriptorProto, docstrings: dict[str, str]
-):
+) -> None:
     source_code_info = file_descriptor.source_code_info
     for loc in source_code_info.location:
         if not loc.leading_comments:
@@ -38,9 +37,8 @@ def get_full_name(
         case FileDescriptorProto.SERVICE_FIELD_NUMBER:
             service = descriptor.service[path[1]]
             append_name_component(service.name, name)
-            if len(path) > 2:
-                if not append_method_to_full_name(service, path, name):
-                    return "", False
+            if len(path) > 2 and not append_method_to_full_name(service, path, name):
+                return "", False
         case _:
             return "", False
 
@@ -95,9 +93,9 @@ def append_enum_to_full_name(
     return False
 
 
-def append_name_component(component: str, name: list[str]):
+def append_name_component(component: str, name: list[str]) -> None:
     name.append(f".{component}")
 
 
-def append_field_component(component: str, name: list[str]):
+def append_field_component(component: str, name: list[str]) -> None:
     name.append(f"/{component}")

@@ -1,16 +1,19 @@
 from pathlib import Path
 
+from connecpy.request import RequestContext
 from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from protodocs import protodocs_app
 
-from .greet_connecpy import GreetServiceASGIApplication, GreetService
-from .greet_pb2 import GreetingRequest, Greeting, GreetingResponse
+from .greet_connecpy import GreetService, GreetServiceASGIApplication
+from .greet_pb2 import Greeting, GreetingRequest, GreetingResponse
 
 
 class ExampleGreetService(GreetService):
-    async def greet(self, request, ctx):
+    async def greet(
+        self, request: GreetingRequest, ctx: RequestContext
+    ) -> GreetingResponse:
         response = "Who are you?"
         match request.greeting.WhichOneof("name"):
             case "nickname":
@@ -47,8 +50,5 @@ docs_app = protodocs_app(
 
 
 app = Starlette(
-    routes=[
-        Mount(greeting_app.path, greeting_app),
-        Mount("/internal/docs", docs_app),
-    ]
+    routes=[Mount(greeting_app.path, greeting_app), Mount("/internal/docs", docs_app)]
 )

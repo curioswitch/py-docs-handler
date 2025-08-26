@@ -1,5 +1,6 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import cast, Sequence, Mapping
+from typing import cast
 
 from ._specification import (
     DescriptionInfo,
@@ -98,15 +99,16 @@ class Generator:
         self,
         type_name_to_enum: dict[str, ProtoEnum],
         type_name_to_struct: dict[str, Struct],
-    ):
+    ) -> None:
         self._type_name_to_enum = type_name_to_enum
         self._type_name_to_struct = type_name_to_struct
 
     def generate(self, spec: Specification) -> list[JsonSchema]:
         schemas: list[JsonSchema] = []
         for service in spec.services:
-            for method in service.methods:
-                schemas.append(self._generate_method_schema(method))
+            schemas.extend(
+                self._generate_method_schema(method) for method in service.methods
+            )
         return schemas
 
     def _generate_method_schema(self, method: Method) -> JsonSchema:
@@ -156,11 +158,11 @@ class Generator:
             case "array" | "object":
                 visited[field.type_signature.signature()] = current_path
 
-        properties: Mapping[str, "JsonSchemaField"] | None = None
+        properties: Mapping[str, JsonSchemaField] | None = None
         additional_properties: (
             AdditionalPropertiesSchema | AdditionalPropertiesBool | None
         ) = None
-        items: "JsonSchemaField | None" = None
+        items: JsonSchemaField | None = None
         if field.type_signature.get_type() == TypeSignatureType.MAP:
             aprops = self._generate_map_additional_properties(
                 field, visited, current_path
@@ -205,7 +207,7 @@ class Generator:
     def _generate_map_additional_properties(
         self, field: Field, visited: dict[str, str], path: str
     ) -> JsonSchemaField:
-        value_type = cast(MapTypeSignature, field.type_signature).value_type
+        value_type = cast("MapTypeSignature", field.type_signature).value_type
         # Create a virtual field for generation
         item_field = Field(
             location=FieldLocation.BODY,
@@ -220,7 +222,7 @@ class Generator:
     def _generate_array_items(
         self, field: Field, visited: dict[str, str], path: str
     ) -> JsonSchemaField:
-        item_type = cast(IterableTypeSignature, field.type_signature).item_type
+        item_type = cast("IterableTypeSignature", field.type_signature).item_type
         # Create a virtual field for generation
         item_field = Field(
             location=FieldLocation.BODY,

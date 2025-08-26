@@ -1,5 +1,6 @@
-from typing import Iterable, Mapping
+from collections.abc import Iterable, Mapping
 
+from google.protobuf import descriptor_pool, message_factory
 from google.protobuf.descriptor import (
     Descriptor,
     EnumDescriptor,
@@ -9,29 +10,28 @@ from google.protobuf.descriptor import (
     ServiceDescriptor,
 )
 from google.protobuf.descriptor_pb2 import FileDescriptorSet
-from google.protobuf import descriptor_pool
-from google.protobuf.message import Message
-from google.protobuf import message_factory
 from google.protobuf.json_format import MessageToJson
+from google.protobuf.message import Message
 
 from ._proto_docstrings import extract_docstrings
 from ._prototypes import ProtoTypeSignature
 from ._specification import (
-    Struct,
-    Field,
     DescriptionInfo,
-    ProtoEnum,
-    Value,
-    Service,
-    Method,
     Endpoint,
-    Specification,
+    Field,
     FieldLocation,
+    Method,
+    ProtoEnum,
+    Service,
+    Specification,
+    Struct,
+    Value,
 )
 from ._typesignature import (
     DescriptiveTypeSignature,
     IterableTypeSignature,
     MapTypeSignature,
+    TypeSignature,
     TypeSignatureType,
 )
 
@@ -40,7 +40,7 @@ def generate_proto_specification(
     services: Iterable[str],
     serialized_descriptors: bytes | None,
     example_requests: Mapping[str, Iterable[Message]] | None = None,
-):
+) -> Specification:
     pool: descriptor_pool.DescriptorPool = descriptor_pool.Default()
 
     service_descriptors: list[ServiceDescriptor] = [
@@ -87,7 +87,7 @@ def find_service_messages_and_enums(
     svc: ServiceDescriptor,
     messages: dict[str, Descriptor],
     enums: dict[str, EnumDescriptor],
-):
+) -> None:
     method: MethodDescriptor
     for method in svc.methods:
         find_message_dependencies(method.input_type, messages, enums)
@@ -96,7 +96,7 @@ def find_service_messages_and_enums(
 
 def find_message_dependencies(
     msg: Descriptor, messages: dict[str, Descriptor], enums: dict[str, EnumDescriptor]
-):
+) -> None:
     if msg.full_name in messages or msg.GetOptions().map_entry:
         return
 
@@ -149,7 +149,7 @@ def convert_field(
     )
 
 
-def field_type_signature(field: FieldDescriptor):
+def field_type_signature(field: FieldDescriptor) -> TypeSignature:
     message_type: Descriptor = field.message_type
     if message_type and message_type.GetOptions().map_entry:
         key_field: FieldDescriptor = message_type.fields[0]
@@ -258,18 +258,17 @@ def convert_method(
     examples: list[str] = []
 
     if example_requests:
-        for name, requests in example_requests.items():
-            if name.startswith("/"):
-                name = name[1:]
+        for n, requests in example_requests.items():
+            name = n.removeprefix("/")
             if full_name == name:
-                for req in requests:
-                    examples.append(
-                        MessageToJson(
-                            req,
-                            preserving_proto_field_name=True,
-                            always_print_fields_with_no_presence=True,
-                        )
+                examples.extend(
+                    MessageToJson(
+                        req,
+                        preserving_proto_field_name=True,
+                        always_print_fields_with_no_presence=True,
                     )
+                    for req in requests
+                )
 
     # TODO: Python does not seem to have a way to serialize JSON fields that
     # were never explicitly populated.

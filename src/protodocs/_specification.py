@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 
-from ._typesignature import TypeSignature
 from ._types import JSON
+from ._typesignature import TypeSignature
 
 
 class FieldLocation(Enum):
@@ -20,10 +20,7 @@ class DescriptionInfo:
     markup: str
 
     def to_json(self) -> JSON:
-        return {
-            "docString": self.doc_string,
-            "markup": self.markup,
-        }
+        return {"docString": self.doc_string, "markup": self.markup}
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -144,10 +141,7 @@ class Value:
     description_info: DescriptionInfo
 
     def to_json(self) -> JSON:
-        res = {
-            "name": self.name,
-            "descriptionInfo": self.description_info.to_json(),
-        }
+        res = {"name": self.name, "descriptionInfo": self.description_info.to_json()}
         if self.int_value is not None:
             res["intValue"] = self.int_value
         return res
