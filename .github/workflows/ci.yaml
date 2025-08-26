@@ -65,5 +65,15 @@ jobs:
       - name: run tests
         run: uv run pytest ${{ matrix.coverage == 'cov' && '--cov=connecpy --cov-report=xml' || '' }}
 
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         if: ${{ matrix.coverage == 'cov' }}
+
+      - run: uv build
+
+  publish:
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        with:
+          repository-url: https://test.pypi.org/legacy/
