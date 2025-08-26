@@ -137,7 +137,7 @@ def convert_message(msg: Descriptor, docstrings: dict[str, str]) -> Struct:
 def convert_field(
     msg: Descriptor, field: FieldDescriptor, docstrings: dict[str, str]
 ) -> Field:
-    requirement = "REQUIRED" if field.is_required else "OPTIONAL"
+    requirement = "REQUIRED" if field.is_required else "OPTIONAL"  # pyright: ignore[reportAttributeAccessIssue]
     doc = docstrings.get(f"{msg.full_name}/{field.name}", "")
     type_sig = field_type_signature(field)
     return Field(
@@ -207,7 +207,7 @@ def field_type_signature(field: FieldDescriptor) -> TypeSignature:
         case _:
             type_signature = ProtoTypeSignature.UNKNOWN
 
-    if field.is_repeated:
+    if field.is_repeated:  # pyright: ignore[reportAttributeAccessIssue]
         type_signature = IterableTypeSignature(
             name="repeated", item_type=type_signature
         )
