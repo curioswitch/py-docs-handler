@@ -1,15 +1,14 @@
 import json
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from pathlib import Path
-from typing import Callable, Iterable, Mapping
 
 from google.protobuf.message import Message
-
-from starlette.requests import Request
-from starlette.responses import Response
-from starlette.routing import Mount, Route
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from ._jsonschema import generate_json_schema
@@ -17,13 +16,11 @@ from ._proto_specification import generate_proto_specification
 
 
 class EncodingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         orig_path: str = request.scope["path"]
-        if (
-            orig_path.endswith(".ttf")
-            or orig_path.endswith(".png")
-            or orig_path.endswith(".json")
-        ):
+        if orig_path.endswith((".ttf", ".png", ".json")):
             return await call_next(request)
         path = orig_path
         if (root_path := request.scope["root_path"]) and path.startswith(root_path):
@@ -45,7 +42,7 @@ def protodocs_app(
     serialized_descriptors: bytes | None = None,
     example_requests: Mapping[str, Iterable[Message]] | None = None,
     injected_script_suppliers: Iterable[Callable[[], str]] = (),
-):
+) -> Starlette:
     # Allow passing in path for convenience
     if isinstance(services, str):
         services = [services]
@@ -58,26 +55,25 @@ def protodocs_app(
     jsonschema = generate_json_schema(spec)
     jsonschema_json = json.dumps([s.to_json() for s in jsonschema])
 
-    def serve_spec(request: Request):
+    def serve_spec(_request: Request) -> Response:
         return Response(
             content=spec_json,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
 
-    def serve_schemas(request: Request):
+    def serve_schemas(_request: Request) -> Response:
         return Response(
             content=jsonschema_json,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
 
-    def serve_versions(request: Request):
+    def serve_versions(_request: Request) -> Response:
         # TODO: Consider allowing users to provide this.
         return Response(
-            content="[]",
-            headers={"Content-Type": "application/json; charset=utf-8"},
+            content="[]", headers={"Content-Type": "application/json; charset=utf-8"}
         )
 
-    def serve_injected(request: Request):
+    def serve_injected(_request: Request) -> Response:
         content = "\n".join(supplier() for supplier in injected_script_suppliers)
         return Response(
             content=content,
@@ -90,10 +86,7 @@ def protodocs_app(
             Route("/schemas.json", serve_schemas),
             Route("/versions.json", serve_versions),
             Route("/injected.js", serve_injected),
-            Mount(
-                "/",
-                StaticFiles(directory=Path(__file__).parent / "docsclient"),
-            ),
+            Mount("/", StaticFiles(directory=Path(__file__).parent / "docsclient")),
         ],
         middleware=[Middleware(EncodingMiddleware)],
     )
